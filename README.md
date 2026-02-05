@@ -151,8 +151,8 @@ The Digital Pumpkin Model represents system design in layered form, showing stak
 
 ## ✍️ Author
 
-Sankeerthana Thoviti
-Srinidhi Pasupunuti
+-Sankeerthana Thoviti
+-Srinidhi Pasupunuti
 
 ---
 
