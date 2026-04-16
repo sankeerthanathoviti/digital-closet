@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Send, Sparkles, MessageSquarePlus, MessageSquare } from 'lucide-react';
+import { Send, Sparkles, MessageSquarePlus, MessageSquare, Trash2 } from 'lucide-react';
 import axios from 'axios';
 
 export default function AIStylist() {
@@ -84,6 +84,21 @@ export default function AIStylist() {
     }
   };
 
+  const deleteSession = async (e, sessionId) => {
+    e.stopPropagation();
+    try {
+      const token = localStorage.getItem('token');
+      const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+      await axios.delete(`http://localhost:5000/ai/chat/sessions/${sessionId}`, config);
+      setSessions(prev => prev.filter(s => s._id !== sessionId));
+      if (activeSessionId === sessionId) {
+        setActiveSessionId(null);
+      }
+    } catch (err) {
+      console.error("Failed to delete session", err);
+    }
+  };
+
   const handleSend = async () => {
     if (!input.trim()) return;
     
@@ -153,14 +168,22 @@ export default function AIStylist() {
          </div>
          <div className="flex-1 overflow-y-auto p-3 space-y-1 stylish-scrollbar">
            {sessions.map(session => (
-             <button 
-               key={session._id} 
-               onClick={() => setActiveSessionId(session._id)}
-               className={`w-full text-left px-3 py-3 rounded-lg text-sm truncate flex items-center gap-3 transition-colors ${activeSessionId === session._id ? 'bg-sage/10 text-sage font-medium' : 'hover:bg-sage/5 text-charcoal/80'}`}
-             >
-               <MessageSquare size={16} className={activeSessionId === session._id ? "text-sage" : "text-charcoal/40"} />
-               <span className="truncate">{session.title}</span>
-             </button>
+             <div key={session._id} className="relative group">
+               <button 
+                 onClick={() => setActiveSessionId(session._id)}
+                 className={`w-full text-left px-3 py-3 pr-10 rounded-lg text-sm truncate flex items-center gap-3 transition-colors ${activeSessionId === session._id ? 'bg-sage/10 text-sage font-medium' : 'hover:bg-sage/5 text-charcoal/80'}`}
+               >
+                 <MessageSquare size={16} className={activeSessionId === session._id ? "text-sage shrink-0" : "text-charcoal/40 shrink-0"} />
+                 <span className="truncate">{session.title}</span>
+               </button>
+               <button
+                 onClick={(e) => deleteSession(e, session._id)}
+                 className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-red-500/0 group-hover:text-red-400 hover:!text-red-600 transition-colors bg-white rounded-md shadow-sm opacity-0 group-hover:opacity-100"
+                 title="Delete Chat"
+               >
+                 <Trash2 size={16} />
+               </button>
+             </div>
            ))}
            {sessions.length === 0 && (
              <div className="text-center p-4 text-sm text-charcoal/40 mt-4">
