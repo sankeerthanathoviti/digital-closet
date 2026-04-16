@@ -270,23 +270,9 @@ const searchWardrobe = async (req, res) => {
   } catch(err) { res.status(500).json({ message: err.message }); }
 };
 
-const deleteChatSession = async (req, res) => {
-  try {
-    const { sessionId } = req.params;
-    if (!sessionId) return res.status(400).json({ message: "sessionId is required" });
-    
-    // Verify the session belongs to the user
-    const session = await ChatSession.findOne({ _id: sessionId, userId: req.user.id });
-    if (!session) return res.status(404).json({ message: "Session not found" });
-
-    await ChatSession.deleteOne({ _id: sessionId });
-    await ChatMessage.deleteMany({ sessionId });
-    
-    res.json({ message: "Session deleted successfully" });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: err.message });
-  }
-};
-
+<<<<<<< HEAD
 module.exports = { analyzeImage, chatStylist, getChatHistory, getChatSessions, planTrip, gapDetection, searchWardrobe, deleteChatSession };
+
+=======
+module.exports = { analyzeImage, chatStylist, getChatHistory, getChatSessions, planTrip, gapDetection, searchWardrobe };
+>>>>>>> neworigin/main

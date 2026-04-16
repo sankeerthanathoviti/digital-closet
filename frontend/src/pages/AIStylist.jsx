@@ -1,5 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
+<<<<<<< HEAD
 import { Send, Sparkles, MessageSquarePlus, MessageSquare, Trash2 } from 'lucide-react';
+=======
+import { Send, Sparkles, MessageSquarePlus, MessageSquare, Trash2 } from 'lucide-react';
+>>>>>>> neworigin/main
+=======
+import { Send, Sparkles, MessageSquarePlus, MessageSquare, Trash2 } from 'lucide-react';
+>>>>>>> neworigin/main
 import axios from 'axios';
 
 export default function AIStylist() {
@@ -84,6 +91,11 @@ export default function AIStylist() {
     }
   };
 
+<<<<<<< HEAD
+>>>>>>> neworigin/main
+  const handleSend = async () => {
+    if (!input.trim()) return;
+=======
   const deleteSession = async (e, sessionId) => {
     e.stopPropagation();
     try {
@@ -99,6 +111,11 @@ export default function AIStylist() {
     }
   };
 
+  const handleSend = async () => {
+    if (!input.trim()) return;
+
+=======
+>>>>>>> neworigin/main
   const handleSend = async () => {
     if (!input.trim()) return;
     
@@ -167,7 +184,8 @@ export default function AIStylist() {
            </button>
          </div>
          <div className="flex-1 overflow-y-auto p-3 space-y-1 stylish-scrollbar">
-           {sessions.map(session => (
+=======
+{sessions.map(session => (
              <div key={session._id} className="relative group">
                <button 
                  onClick={() => setActiveSessionId(session._id)}
@@ -183,7 +201,17 @@ export default function AIStylist() {
                >
                  <Trash2 size={16} />
                </button>
-             </div>
+             </div>)
+=======
+             <button 
+               key={session._id} 
+               onClick={() => setActiveSessionId(session._id)}
+               className={`w-full text-left px-3 py-3 rounded-lg text-sm truncate flex items-center gap-3 transition-colors ${activeSessionId === session._id ? 'bg-sage/10 text-sage font-medium' : 'hover:bg-sage/5 text-charcoal/80'}`}
+             >
+               <MessageSquare size={16} className={activeSessionId === session._id ? "text-sage" : "text-charcoal/40"} />
+               <span className="truncate">{session.title}</span>
+             </button>
+>>>>>>> neworigin/main
            ))}
            {sessions.length === 0 && (
              <div className="text-center p-4 text-sm text-charcoal/40 mt-4">
