@@ -12,10 +12,35 @@ export default function Travel() {
   const [isPlanning, setIsPlanning] = useState(false);
   const [packingPlan, setPackingPlan] = useState(null);
   const [wardrobe, setWardrobe] = useState([]);
+  const [travelHistory, setTravelHistory] = useState([]);
+  const [showHistory, setShowHistory] = useState(false);
 
   useEffect(() => {
     fetchWardrobe();
+    fetchHistory();
   }, []);
+
+  const fetchHistory = async () => {
+    try {
+      // Get token if auth is enforced (from context/localStorage)
+      const token = localStorage.getItem('token');
+      const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+      const res = await axios.get('http://localhost:5000/ai/packing/history', config);
+      setTravelHistory(res.data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const loadHistoryItem = (plan) => {
+    setDestination(plan.destination);
+    setStartDate(plan.startDate || '');
+    setEndDate(plan.endDate || '');
+    setWeather(plan.weather || '');
+    setOccasion(plan.occasion || '');
+    setPackingPlan(plan.packingPlan);
+    if(window.innerWidth < 1024) setShowHistory(false);
+  };
 
   const fetchWardrobe = async () => {
     try {
@@ -38,6 +63,7 @@ export default function Travel() {
         occasion
       });
       setPackingPlan(res.data);
+      fetchHistory(); // Refresh history
     } catch (err) {
       console.error(err);
       alert("Oops! The AI couldn't generate a plan. Please try again.");
@@ -71,7 +97,49 @@ export default function Travel() {
   };
 
   return (
-    <div className="flex-1 p-8 bg-beige/30 max-w-6xl mx-auto w-full">
+    <div className="flex-1 p-8 bg-beige/30 max-w-7xl mx-auto w-full flex gap-6 relative">
+      
+      {/* Mobile History Toggle */}
+      <button 
+        onClick={() => setShowHistory(!showHistory)}
+        className="lg:hidden absolute top-8 right-8 z-20 bg-white p-2 rounded-lg shadow-sm border border-sage/20 text-sage"
+      >
+        <MapPin size={20} />
+      </button>
+
+      {/* History Sidebar */}
+      <div className={`fixed inset-y-0 left-0 w-72 bg-white border-r border-sage/10 shadow-xl lg:relative lg:block lg:w-1/4 lg:bg-transparent lg:border-none lg:shadow-none z-10 p-6 lg:p-0 transition-transform duration-300 ${showHistory ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
+         <div className="flex justify-between items-center mb-6 pt-16 lg:pt-0">
+           <h2 className="text-2xl font-serif text-charcoal">Past Trips</h2>
+         </div>
+         <div className="space-y-3 overflow-y-auto max-h-[80vh] stylish-scrollbar pr-2">
+            {travelHistory.length === 0 ? (
+              <p className="text-sm text-charcoal/40 italic">No trips planned yet.</p>
+            ) : (
+              travelHistory.map(plan => (
+                <button 
+                  key={plan._id} 
+                  onClick={() => loadHistoryItem(plan)}
+                  className="w-full text-left p-4 rounded-xl bg-white border border-sage/10 shadow-sm hover:border-sage/40 hover:shadow-md transition-all group"
+                >
+                  <h3 className="font-medium text-charcoal flex items-center gap-2 mb-1 group-hover:text-sage transition-colors">
+                    <Plane size={14} /> {plan.destination}
+                  </h3>
+                  <p className="text-xs text-charcoal/60 mb-2 truncate">{plan.occasion} • {plan.weather}</p>
+                  <div className="flex gap-2">
+                    {Object.values(plan.packingPlan).slice(1).flat().slice(0, 3).map((id, i) => {
+                      const wItem = wardrobe.find(w => w._id === id);
+                      if (!wItem) return null;
+                      return <img key={i} src={wItem.imageBase64} className="w-8 h-8 rounded-full border border-sage/20 object-cover" />;
+                    })}
+                  </div>
+                </button>
+              ))
+            )}
+         </div>
+      </div>
+
+      <div className="flex-1 flex flex-col pt-16 lg:pt-0">
       <div className="flex justify-between items-end mb-10">
         <div>
           <h1 className="text-4xl font-serif mb-2 flex items-center gap-3">Travel Planner <Plane className="text-sage" size={32} /></h1>
@@ -139,8 +207,14 @@ export default function Travel() {
                <p className="text-charcoal/60 max-w-sm relative z-10">Matching your clothes with the weather in {destination || 'your destination'}</p>
              </div>
           ) : (
-            <div className="bg-ivory rounded-2xl shadow-sm border border-sage/10 p-8">
-               <div className="bg-sage/10 text-sage p-4 rounded-xl mb-8 flex gap-3 text-sm leading-relaxed border border-sage/20">
+            <div className="bg-ivory rounded-2xl shadow-sm border border-sage/10 p-8 relative">
+               <button 
+                  onClick={() => { setPackingPlan(null); setDestination(''); setWeather(''); setOccasion(''); setStartDate(''); setEndDate(''); }} 
+                  className="absolute top-6 right-6 bg-white border border-sage/20 text-charcoal/80 text-xs font-medium px-4 py-2 rounded-lg hover:bg-sage/10 transition-colors shadow-sm flex items-center gap-2"
+               >
+                  <Plane size={14} className="rotate-45" /> New Trip
+               </button>
+               <div className="bg-sage/10 text-sage p-4 pr-32 rounded-xl mb-8 flex gap-3 text-sm leading-relaxed border border-sage/20">
                   <Sparkles size={20} className="shrink-0 mt-0.5" />
                   <p>{packingPlan.summary}</p>
                </div>
@@ -153,6 +227,7 @@ export default function Travel() {
             </div>
           )}
         </div>
+      </div>
       </div>
     </div>
   );

@@ -87,6 +87,20 @@ export default function MyCloset() {
     }
   };
 
+  const handleWear = async (id, currentUsage) => {
+    try {
+      const res = await axios.put(`http://localhost:5000/wardrobe/${id}`, {
+        usageCount: (currentUsage || 0) + 1,
+        lastWorn: new Date()
+      });
+      // Update state without fetching
+      setAllItems(prev => prev.map(item => item._id === id ? res.data : item));
+      setDisplayedItems(prev => prev.map(item => item._id === id ? res.data : item));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -227,7 +241,18 @@ export default function MyCloset() {
                </button>
                <div className="p-3">
                   <p className="text-sm font-medium">{item.color} {item.pattern}</p>
-                  <p className="text-xs text-charcoal/60">{item.category}</p>
+                  <p className="text-xs text-charcoal/60 mb-2">{item.category}</p>
+                  <div className="flex items-center justify-between mt-auto">
+                    <span className="text-xs font-medium text-sage bg-sage/10 px-2 py-0.5 rounded-full">
+                      Worn {item.usageCount || 0}x
+                    </span>
+                    <button 
+                      onClick={() => handleWear(item._id, item.usageCount)}
+                      className="text-xs font-medium bg-ivory border border-sage/20 text-charcoal px-3 py-1 rounded-lg hover:bg-sage hover:text-white transition-colors shadow-sm"
+                    >
+                      Wear
+                    </button>
+                  </div>
                </div>
              </div>
            ))}
