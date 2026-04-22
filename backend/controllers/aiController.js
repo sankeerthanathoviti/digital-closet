@@ -1,6 +1,15 @@
 const WardrobeItem = require('../models/WardrobeItem');
 const ChatMessage = require('../models/ChatMessage');
 const ChatSession = require('../models/ChatSession');
+const TravelPlan = require('../models/TravelPlan');
+const { Client } = require('@gradio/client');
+
+const base64ToBlob = (base64) => {
+  const base64Data = base64.split(',')[1];
+  const type = base64.split(',')[0].split(':')[1].split(';')[0];
+  const buffer = Buffer.from(base64Data, 'base64');
+  return new Blob([buffer], { type });
+};
 
 const analyzeImage = async (req, res) => {
   try {
@@ -212,9 +221,28 @@ Respond in JSON ONLY with exactly:
     textResult = textResult.replace(/```json/g, '').replace(/```/g, '').trim();
     const parsed = JSON.parse(textResult);
 
+    await TravelPlan.create({
+      userId: req.user.id,
+      destination,
+      startDate,
+      endDate,
+      weather,
+      occasion,
+      packingPlan: parsed
+    });
+
     res.json(parsed);
   } catch (err) {
     console.error(err);
+    res.status(500).json({ message: err.message });
+  }
+};
+
+const getTravelHistory = async (req, res) => {
+  try {
+    const history = await TravelPlan.find({ userId: req.user.id }).sort({ createdAt: -1 });
+    res.json(history);
+  } catch (err) {
     res.status(500).json({ message: err.message });
   }
 };
@@ -270,4 +298,53 @@ const searchWardrobe = async (req, res) => {
   } catch(err) { res.status(500).json({ message: err.message }); }
 };
 
-module.exports = { analyzeImage, chatStylist, getChatHistory, getChatSessions, planTrip, gapDetection, searchWardrobe };
+const deleteChatSession = async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    await ChatSession.findByIdAndDelete(sessionId);
+    await ChatMessage.deleteMany({ sessionId });
+    res.json({ message: "Session deleted" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: err.message });
+  }
+};
+
+const virtualTryOn = async (req, res) => {
+  // Try extending timeout if express handles it, otherwise proxies might still drop after 2m
+  req.setTimeout(300000);
+  try {
+    const { mannequinBase64, garmentBase64 } = req.body;
+    if (!mannequinBase64 || !garmentBase64) {
+      return res.status(400).json({ message: "Both mannequin and garment images are required." });
+    }
+
+    const mannequinBlob = base64ToBlob(mannequinBase64);
+    const garmentBlob = base64ToBlob(garmentBase64);
+
+    console.log("Connecting to Hugging Face space yisol/IDM-VTON...");
+    const client = await Client.connect("yisol/IDM-VTON");
+    
+    console.log("Sending prediction request. This could take up to 3 minutes...");
+    const result = await client.predict("/tryon", [
+      {"background": mannequinBlob, "layers": [], "composite": null},
+      garmentBlob, 
+      "A piece of clothing", 
+      true, 
+      false, 
+      30, 
+      42, 
+    ]);
+
+    if (result && result.data && result.data.length > 0 && result.data[0].url) {
+      res.json({ imageUrl: result.data[0].url });
+    } else {
+      res.status(500).json({ message: "Failed to parse result from Hugging Face space.", debug: result });
+    }
+  } catch (err) {
+    console.error("Virtual Try-On Error:", err);
+    res.status(500).json({ message: "Try-On queue failed or timed out. Please try again." });
+  }
+};
+
+module.exports = { analyzeImage, chatStylist, getChatHistory, getChatSessions, planTrip, gapDetection, searchWardrobe, deleteChatSession, getTravelHistory, virtualTryOn };

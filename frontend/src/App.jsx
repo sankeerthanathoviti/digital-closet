@@ -1,4 +1,6 @@
+import { useEffect, useContext } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { AuthContext } from './context/AuthContext';
 import Navbar from './components/Navbar';
 import Home from './pages/Home';
 import MyCloset from './pages/MyCloset';
@@ -9,6 +11,17 @@ import Insights from './pages/Insights';
 import Wishlist from './pages/Wishlist';
 
 function App() {
+  const { user } = useContext(AuthContext);
+
+  useEffect(() => {
+    // Dynamically increase root font size for authenticated users to scale all text and rem units up
+    if (user) {
+      document.documentElement.style.setProperty('font-size', '19px', 'important');
+    } else {
+      document.documentElement.style.setProperty('font-size', '16px', 'important');
+    }
+  }, [user]);
+
   return (
     <Router>
       <div className="min-h-screen flex flex-col pt-16">

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { PieChart, TrendingUp, Palette, BarChart2 } from 'lucide-react';
+import { PieChart as PieChartIcon, TrendingUp, Palette, BarChart2 } from 'lucide-react';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import axios from 'axios';
 
 export default function Insights() {
@@ -53,18 +54,46 @@ export default function Insights() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-sage/10">
-           <h3 className="text-lg font-serif mb-6 flex items-center gap-2"><PieChart size={18}/> Category Breakdown</h3>
-           {Object.entries(categoryCount).map(([cat, count]) => (
-             <div key={cat} className="mb-4">
-               <div className="flex justify-between text-sm mb-1">
-                 <span className="font-medium text-charcoal/80">{cat}</span>
-                 <span className="text-charcoal/50">{Math.round((count/totalItems)*100)}%</span>
-               </div>
-               <div className="w-full h-2 bg-beige rounded-full overflow-hidden">
-                  <div className="h-full bg-sage" style={{ width: `${(count/totalItems)*100}%` }}></div>
+           <h3 className="text-lg font-serif mb-6 flex items-center gap-2"><PieChartIcon size={18}/> Category Breakdown</h3>
+           {Object.keys(categoryCount).length > 0 ? (
+             <div className="h-[250px] w-full">
+               <ResponsiveContainer width="100%" height="100%">
+                 <PieChart>
+                   <Pie
+                     data={Object.entries(categoryCount).map(([name, value]) => ({ name, value }))}
+                     cx="50%"
+                     cy="50%"
+                     innerRadius={60}
+                     outerRadius={80}
+                     paddingAngle={5}
+                     dataKey="value"
+                   >
+                     {Object.entries(categoryCount).map((entry, index) => {
+                       const COLORS = ['#8EB29A', '#E07A5F', '#3D405B', '#F2CC8F', '#F4F1DE', '#D4A373'];
+                       return <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />;
+                     })}
+                   </Pie>
+                   <Tooltip 
+                     formatter={(value, name) => [`${value} items`, name]}
+                     contentStyle={{ borderRadius: '12px', border: '1px solid #e1e4e0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                   />
+                 </PieChart>
+               </ResponsiveContainer>
+               <div className="flex flex-wrap justify-center gap-4 mt-4">
+                 {Object.entries(categoryCount).map(([name, value], index) => {
+                   const COLORS = ['#8EB29A', '#E07A5F', '#3D405B', '#F2CC8F', '#F4F1DE', '#D4A373'];
+                   return (
+                     <div key={name} className="flex items-center gap-1.5 text-xs text-charcoal/70">
+                       <span className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }}></span>
+                       {name} ({Math.round((value/totalItems)*100)}%)
+                     </div>
+                   );
+                 })}
                </div>
              </div>
-           ))}
+           ) : (
+             <p className="text-sm text-charcoal/50 text-center py-10">Add items to your closet to see insights.</p>
+           )}
         </div>
 
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-sage/10">
